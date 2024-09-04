@@ -1,0 +1,288 @@
+---
+title: "Selection Code"
+output: html_document
+date: "2024-08-15"
+---
+
+Let's load in the necessary packages for our lab. In this example, we'll use a built-in dataset from the carData package. So, let us install that:
+```{r}
+library(carData)
+library(psych)
+library(ggplot2)
+library(doBy)
+library(rstatix)
+```
+
+The dataset that we are going to use is called Salaries. To learn about this dataset, run this code:
+```{r}
+?Salaries
+```
+You should see a description of the dataset open up somewhere on your screen (usually on the lower right hand side of Rstudio) that describes the dataset. Note that this dataset gives salary information for professors of different ranks and years of tenure. 
+
+
+First, let's assign this data to an object, so that we can more easily reference the data later:
+```{r}
+mydata<- Salaries
+```
+
+
+Let's take a look at the variable names in this dataset:
+```{r}
+colnames(mydata)
+summary(mydata)
+```
+
+
+Let's take a look at some descriptive information of this data. 
+```{r}
+describe(mydata)
+```
+
+Regression is a PREDICTION MODEL, where we have an outcome that we are interested in (e.g., Salary), and we want to determine whether other variables are useful in predicting that outcome. For example, we may want to see if the amount of years it has been since someone received their PhD can predict their salary. Regression is a linear model, which means that a "best fit" line is calculated based on the information known (e.g. Years Since PhD) to predict an the unknown outcome (Salary). 
+
+Importantly, to create the model, we must have SOME data for both the predictor (Years Since Phd) and outcome (Salary). Then, after we create the model - we can predict unknown outcomes. In this case, we would be able to predict salaries for the people by only knowing the amount of time since they received their PhD.
+
+The more informative the predictors are, the better the line will fit to the data and the less mistakes you will make when making predictions of unknown outcomes. Here is an example of what data with a best fit regression line looks like:
+```{r}
+reg1<- lm(salary ~ yrs.since.phd, data=mydata)
+
+ggplot(mydata, aes(x = yrs.since.phd, y = salary)) +
+  geom_point(color = "darkred") +        # Scatter plot
+  geom_smooth(method = "lm", color = "blue") +  # Regression line
+  labs(x = "Years Since PhD ", y = "Salary", title = "Scatter Plot with Regression Line") 
+```
+
+
+The regression line is formed through a basic equation. In the example above we have one predictor. 
+
+Y = b0 + b1X1 
+
+where:
+Y = the outcome we are trying to predict
+b0 = the intercept, which tells us what the value of Y would be when both X1 and X2 are equal to 0
+b1 = the amount Y changes for every one unit increase in X1  (i.e. slope)
+X1 = a predictor variable
+
+
+Sometimes, the line is more complicated - like when we have two predictors:
+
+Y = b0 + b1X1 + b2X2
+
+where:
+Y = the outcome we are trying to predict
+b0 = the intercept, which tells us what the value of Y would be when both X1 and X2 are equal to 0
+b1 = the amount Y changes for every one unit increase in X1  (i.e. slope)
+X1 = a predictor variable
+b2 = the amount Y changes for every one unit increase in X2  (i.e. slope)
+X2 = a predictor variable
+
+
+Let's run a regression, where years since PhD predicts salary. The code below creates an object, fit1, that runs the regression, where years since phd predicts salary. Then, it prints the results.
+```{r}
+fit1<- lm(salary ~ yrs.since.phd, data=mydata)
+summary(fit1)
+```
+There are 2 results printed in the coefficients table of the result. The INTERCEPT row tells you what the outcome (salary) is when the X variable (years since PhD) is 0. Here, the intercept is essentially telling us what the average salary is expected to be for someone who has just graduated with a PhD (and thus, has 0 years since graduation).
+
+The second row tells us about the relationship between Y (salary) and our X variable (years since PhD). The "estimate" column tells us that, with a 1-unit increase in X, there is a 985.3 unit increase in Y. Said another way - as 1 year passes since someone graduated with a PhD, they are expected to make 985.30 dollars more in their annual salary relative to what they would have made when they were just out of graduate school.
+
+There is also a p-value column, telling us that the slope is significant - i.e., that it is a useful predictor of our outcome, Y. In our analyses here, we would determine that, without any other predictors in this model, years since PhD can give us valuable information about how much money professors should make.
+
+Note that, for this regression with only 1 X variable in it, our regression line is defined by this equation:
+Y = b0 + b1X1
+
+And, armed with information about the intercept and the slope of the X variable, we could predict what Y would be given any value of X. We would simply plug the value for the intercept and the slope into the equation, and multiply by a value of X:
+
+  intercept     slope
+Y = 91718.70 + (985.30)*X
+
+
+Using this equation, if X = 0, then Y would yield:
+```{r}
+y1<- 91718.70 + (985.30)*0
+y1
+```
+Note that this is value is equal to the intercept. This is because the intercept reflects the value of Y when X = 0.
+
+
+If X = 1, then Y would yield:
+```{r}
+y2<- 91718.70 + (985.30)*1
+y2
+```
+We can see that our Y increased when X was 1, relative to when X was 0. In fact, we know how much it increased -- it increased by the amount of the slope: 985.3. This confirms that the equation simply adds another $985.30 to the Y value with a 1-unit increase in X.
+
+
+This equation is useful, because it means that we can use this model to anticipate the average salary of people with any number of years since graduation. For example:
+```{r}
+y3<- 91718.70 + (985.30)*5
+y3
+```
+This value tells us what the salary should be for people who are 5 years out of their PhD program according to our model (i.e., using years since PhD as a predictor).
+
+
+```{r}
+y4<- 91718.70 + (985.30)*50
+y4
+```
+This value tells us what the salary should be for people who received their PhD 50 years ago, according to our model. Note that there are cautions that should be made when trying to make conclusions beyond your data. The model may not predict things appropriately beyond the range of the original data used to create the model.
+
+
+Also note that there are other metrics that are printed with your data other than the intercept or slopes. Let's take a look at our initial model one more time and note some other key pieces of information:
+```{r}
+summary(fit1)
+```
+Notice that we also get an F-statistic and a p value. This may look familiar, because you got the same statistics from ANOVAs (earlier in the document). This is because ANOVAs and regression are in the same family of statistical tests, and perform similar procedures to the data - but they look a bit differently. 
+
+Also notice that there is a line with an "Adjusted R-squared" value. R squared is a value that attempts to tell you how much of the variance in your outcome (in this case, salary) is explained by your predictive model. Typically, the more useful predictors you add to the model, the more variance will be explained in your outcome. However, not all predictors are useful for your model, and adding a lot of poor predictors to your model could artificially inflate your R squared due to random chance. For this reason, you should use the ADJUSTED R-SQUARED value that is reported in the summary. This value tells you how much variance in your outcome is explained by your model, but is adjusted based upon how many predictors you've added to the model. If you add many poor predictors, your Adjusted R-Squared value may decrease. But, like with R-squared, if you add more useful predictors to the model, the value should increase. We will use this information to our advance for the next section.
+
+
+Now, let's take a look at our model when we add a second predictor variable, years of service, to it. In this case, we will have two X variables. First, let's run a regression to examine whether both years of service and years since PhD predicts salary:
+```{r}
+fit2<- lm(salary ~ yrs.service + yrs.since.phd, data=mydata)
+summary(fit2)
+```
+Notice, the effect of Years Since PhD on Salary changes depending on whether we have 1 predictor or 2 predictors in the model. When we have 1 predictor in the model, the effect of X1 on Y is called the total effect. When we have two predictors in the model, the interpretation of the effect changes from the total effect of X1 on Y to the UNIQUE effect of X1 on Y. The UNIQUE effect of X1 on Y  means that the part of X1 that is effecting Y is not at all related to X2. The effect of X1 on Y is UNIQUE from X2. 
+
+To figure out the UNIQUE effect of X1 on Y, we first need to figure out which part of X1 is UNIQUE from X2. In this case, which part of Years of Service gives us information that cannot be explained by - or is unique from -- Years Since Phd.
+
+We can determine this by making our best prediction of Years of Service (X1) based on the information we know from Years Since Phd (X2). It will not be a perfect prediction, and the mistakes that we make in our prediction  represent the UNIQUE information in Years of Service (X1) above and beyond what information we know when we have soley Years Since Phd (X2) in the model. Below is how we would structure the regression equation where Years of Service is predicted by Years Since Phd. We  also plot the best fit line (AKA regression line):
+
+
+```{r}
+#Note that yrs.service is our X1 and yrs.since.phd is our X2 in this example
+fit3<- lm(yrs.service ~ yrs.since.phd, data=mydata)
+
+
+#Here is a plot of the model.
+ggplot(mydata, aes(x = yrs.since.phd, y = yrs.service)) +
+  geom_point(color = "darkred") +        # Scatter plot
+  geom_smooth(method = "lm", color = "blue") +  # Regression line
+  labs(x = "Years Since PhD  ", y = "Years of Service") +
+  xlim(0, 60) + # Constrain y-axis from 0 to 60 
+  ylim(0, 60)  # Constrain y-axis from 0 to 60 
+```
+We can calculate the exact amount of unique information that Years of Service (X1) gives us above and beyond Years Since Phd (X2). The unique information given by a variable is also called the residuals. This is because the unique information is the residual (left over) of one variable (e.g. Years of Service or X1) once we account for what we already know with another variable (e.g. Years Since Phd or X2). The residuals can be represented by imagining a vertical line from each red point and the blue prediction line in the graph you see above. 
+
+Below, we will use code to find the residuals of X1 after using X2 as our predictor. That is, what UNIQUE information is left over in Years of Service (X1) above and beyond what we know when we have information about one's Years Since PhD (X2)
+```{r}
+# Extract residuals from the model
+residuals_model3 <- residuals(fit3)
+
+#We then save the residuals and the squared residuals to new variables in our data frame
+mydata$residuals_YrsofService<- (residuals_model3)
+
+```
+
+
+Now, let's reverse the predictor and the outcome and see what UNIQUE information is left over in Years Since PhD  (X2) above and beyond what we know when we have information about one's Years of Service (X1)
+```{r}
+# Now Years Since PhD is our outcome and Years of Service is our predictor (i.e. we flipped our predictor and outcome)
+fit4<- lm(yrs.since.phd ~ yrs.service, data=mydata)
+```
+
+
+```{r}
+#Here is a plot of the new model. Notice that the graph looks different than the other graph. 
+ggplot(mydata, aes(x = yrs.service, y = yrs.since.phd)) +
+  geom_point(color = "darkred") +        # Scatter plot
+  geom_smooth(method = "lm", color = "blue") +  # Regression line
+  labs(x = "Years of Service", y = "Years Since PhD") +
+  xlim(0, 60) + # Constrain y-axis from 0 to 60 
+  ylim(0, 60)    # Constrain y-axis from 0 to 60 
+
+```
+
+Continuing the process, we now extract the residuals.
+```{r}
+# Here we extract the residuals from the model
+residuals_model4 <- residuals(fit4)
+
+#We then save the residuals and the squared residuals to new variables in our data frame
+mydata$residuals_YrsSincePhd<- (residuals_model4)
+```
+
+
+Finally, let's look back at the model that included both Years of Service (X1) and Years Since PhD (X2). 
+```{r}
+fit2<- lm(salary ~ yrs.service + yrs.since.phd, data=mydata)
+summary(fit2)
+```
+
+Let's use the residuals of Years of Service (the Unique Information Years of Service gives us above and beyond years since phd) to predict salary. How do you think this will relate to the output above?
+```{r}
+fit5 <- lm(mydata$salary ~ mydata$residuals_YrsofService)
+summary(fit5)
+```
+
+Let's now use the residuals of Years of Since Phd (the Unique Information Years Since PhD gives us above and beyond Years of Service) to predict salary. How do you think this will relate to the output above?
+```{r}
+fit6 <- lm(mydata$salary ~ mydata$residuals_YrsSincePhd)
+summary(fit6)
+```
+
+When we build models, we want to see if a more complicated model, with information from many unique predictors, is worth using. If not, then we should use the simpler model that gives us similar information. In our example, we might ask which model is better? Our first model with one predictor or our second model with two predictors? 
+```{r}
+#Model 1
+fit1<- lm(salary ~ yrs.since.phd, data=mydata)
+summary(fit1)
+```
+```{r}
+#Model 2
+fit2<- lm(salary ~ yrs.service + yrs.since.phd, data=mydata)
+summary(fit2)
+```
+
+We can test to see if our new model is actually "better" by running a model comparison.
+```{r}
+anova(fit1,fit2)
+```
+Our p value tells us if the change in the R-squared amount from the first model to the second model is significant! If it is significant, we should use the more complex model because it means it is increasing our predictive abilities. 
+
+Just as we described before, we can use our regression equation to predict expected salaries for individuals based on this model. We would once again plug in the values to our regression equation:
+
+Y = b0 + b1X1 + b2X2
+Y = 89912.20 + (-629.10 * X1) + (1562.9 * X2)
+
+
+Let us use this regression equation to predict the expected salaries of other faculty not included in the original dataset.
+
+Download the "faculty_example.csv" file from ELMS, and **IMPORTANT**, save it to the same folder as this Rmarkdown file. Then, read the file in:
+```{r}
+fac <- read.csv("~/Desktop/Psyc450/Selection Project/Faculty Example Data.csv")
+```
+
+Let's briefly examine the dataset:
+```{r}
+colnames(fac)
+summary(fac)
+```
+Notice that there is no column containing the salary information for individuals in this dataset. That's okay, because we can create a column to represent that information. We can use the model we evaluated above to predict salaries for these individuals based on their reported years since PhD and years of service.
+
+Let's first create the expected salary values using our equation. Note that we replace "X1" and "X2" in the equation above with references to the actual variables from the dataset that we're using.
+```{r}
+expectedY<- (89912.20 + (-629.10 * fac$yrs.service) + (1562.9 * fac$yrs.since.phd))
+expectedY
+```
+Now, let's append this value to our dataset so that this file of information about other faculty also contains their expected salaries. Here, we're adding a new column called Expected Salary to this example faculty dataset, and the values contained within this column reflect the expected salary values we just computed.
+
+```{r}
+fac$ExpectedSalary<- expectedY
+fac
+```
+
+Let's say that we want to see the top 5 faculty earners from this list. We can sort the data in order to easily see who earns the most.
+```{r}
+sorteddata_LtoH <- fac[order(fac$ExpectedSalary),]
+sorteddata_LtoH
+
+sorteddata_HtoL <- fac[order(-fac$ExpectedSalary),]
+sorteddata_HtoL
+```
+
+We can also create a subset of the data to only include certain cases.To do this, we create a subset object, and we specify the dataset, the criteria that cases must meet in order to be selected (here, we select only cases whose expected salary are above $102,000, given that all top 5 in the past dataset were above 101k), and what variables we want to print for these cases (here, their rank, discipline, sex, and expected salary)
+```{r}
+subset<- subset(fac, ExpectedSalary > 102000, select=c(name, ExpectedSalary))
+subset
+```
+
