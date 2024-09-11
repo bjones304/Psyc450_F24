@@ -1,0 +1,115 @@
+---
+title: "Lab Review"
+output: html_document
+date: "2024-09-11"
+---
+Load in the libraries and data
+```{r}
+library(carData)
+library(psych)
+library(ggplot2)
+library(dplyr)
+library(Hmisc)
+library(dplyr)
+mydata <- Salaries
+```
+
+
+When we build models, we want to see if a more complicated model, with information from many unique predictors, is worth using. If not, then we should use the simpler model that gives us similar information. In our example, we might ask which model is better? Our first model with one predictor or our second model with two predictors? 
+```{r}
+#Model 1
+fit1<- lm(salary ~ yrs.since.phd, data=mydata)
+summary(fit1)
+```
+
+```{r}
+#Model 2
+fit2<- lm(salary ~  yrs.since.phd + yrs.service, data=mydata)
+summary(fit2)
+```
+
+We can test to see if our new model is actually "better" by running a model comparison.
+```{r}
+anova(fit1,fit2)
+```
+Our p value tells us if the change in the R-squared amount from the first model to the second model is significant! If it is significant, we should use the more complex model because it means it is increasing our predictive abilities. 
+
+Just as we described before, we can use our regression equation to predict expected salaries for individuals based on this model. We would once again plug in the values to our regression equation:
+
+Y = b0 + b1X1 + b2X2
+Y = 89912.20 + (-629.10 * X1) + (1562.9 * X2)
+
+
+Let us use this regression equation to predict the expected salaries of other faculty not included in the original dataset.
+
+Make sure the data Faculty.Example.Data is imported into the global enivorment. 
+```{r}
+fac <- Faculty.Example.Data_F24
+```
+
+Let's briefly examine the columns in the dataset:
+```{r}
+colnames(fac)
+```
+Notice that there is no column containing the salary information for individuals in this dataset. That's okay, because we can create a column to represent that information. We can use the model we evaluated above to predict salaries for these individuals based on their reported years since PhD and years of service.
+
+Let's first create the expected salary values using our equation. Note that we replace "X1" and "X2" in the equation above with references to the actual variables from the dataset that we're using.
+```{r}
+expectedY<- (89912.20 + (-629.10 * fac$yrs.service) + (1562.9 * fac$yrs.since.phd))
+expectedY
+```
+Now, let's append this value to our dataset so that this file of information about other faculty also contains their expected salaries. Here, we're adding a new column called Expected Salary to this example faculty dataset, and the values contained within this column reflect the expected salary values we just computed.
+
+```{r}
+fac$ExpectedSalary<- expectedY
+fac
+```
+
+Let's say that we want to see the top 5 faculty earners from this list. We can sort the data in order to easily see who earns the most.
+```{r}
+sorteddata_LtoH <- fac[order(fac$ExpectedSalary),]
+sorteddata_LtoH
+
+sorteddata_HtoL <- fac[order(-fac$ExpectedSalary),]
+sorteddata_HtoL
+```
+
+We can also create a subset of the data to only include certain cases.To do this, we create a subset object, and we specify the dataset, the criteria that cases must meet in order to be selected (here, we select only cases whose expected salary are above $102,000, given that all top 5 in the past dataset were above 101k), and what variables we want to print for these cases (here, their rank, discipline, sex, and expected salary)
+```{r}
+subset<- subset(fac, ExpectedSalary > 102000, select=c(name, ExpectedSalary))
+subset
+```
+
+
+A final note. Here is some great code that allows you to evaluate correlations between 1 target variable and all the other variables in the data set. All you have to do is:
+#change the data name on line 299 from mydata to whatever your data is called
+#change the target variable on line 309 and 310 from salary to whatever you are interested in investigating further
+```{r}
+#Extract only numeric variables. ## Change mydata to whatever you data is called here
+continuous_vars <- mydata %>% select_if(is.numeric)
+
+#Create Correlation table 
+correlation_results <- rcorr(as.matrix(continuous_vars))
+
+# Extract correlation coefficients and p-values
+correlation_matrix <- correlation_results$r
+p_values <- correlation_results$P
+
+# Print the correlation matrix and p-values for salary correlated with every other variable ## In this example, salary is the target variable. ##Change salary to the any variable in your data that you want to investigate further
+target_correlations <- correlation_matrix["salary", ]
+target_p_values <- p_values["salary", ]
+
+# Combine the correlation coefficients and p-values into a data frame
+final_correlation_table <- data.frame(
+  Variable = names(target_correlations),
+  Correlation = target_correlations,
+  P_Value = target_p_values
+)
+```
+
+Print the table sorted by p-value to identify significant correlations between the target variable and all other continious variables in the data sheet. In this example the target variable is salary because that is what is included in line 309 and 310. The target variable will be whatever variable you replace salary with in lines 309 and 310.
+```{r}
+final_correlation_table <- final_correlation_table[order(final_correlation_table$P_Value), ]
+print(final_correlation_table)
+```
+
